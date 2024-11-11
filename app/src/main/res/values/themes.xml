@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.Formula1" parent="Theme.AppCompat.DayNight.DarkActionBar" >
+
+        <item name="colorPrimary">@color/red</item>
+
+    </style>
+
+</resources>

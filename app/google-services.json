@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "50929973214",
+    "project_id": "formula1-avancada",
+    "storage_bucket": "formula1-avancada.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:50929973214:android:806ce0c79b634419c38f4f",
+        "android_client_info": {
+          "package_name": "com.example.formula1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBdL1Bw3aMvAc9P0RrzZCcz0e2owJnpJpc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

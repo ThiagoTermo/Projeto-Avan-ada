@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MainActivity"
+    android:id="@+id/carsContainer"
+    android:background="@color/white">
+
+    <Button
+        android:id="@+id/bPause"
+        android:layout_width="90dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="160dp"
+        android:layout_marginTop="500dp"
+        android:background="@color/yellow"
+        android:text="Pause" />
+
+    <Button
+        android:id="@+id/bFinish"
+        android:layout_width="90dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="500dp"
+        android:layout_marginStart="275dp"
+        android:background="@color/red"
+        android:text="Finish" />
+
+    <Button
+        android:id="@+id/bStart"
+        android:layout_width="90dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="45dp"
+        android:layout_marginTop="500dp"
+        android:background="@color/green"
+        android:text="Start" />
+
+    <Button
+        android:id="@+id/bRecord"
+        android:layout_width="90dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="100dp"
+        android:layout_marginTop="560dp"
+        android:background="@color/azulClaro"
+        android:text="Record" />
+
+    <Button
+        android:id="@+id/bRead"
+        android:layout_width="90dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="220dp"
+        android:layout_marginTop="560dp"
+        android:background="@color/verdeClaro"
+        android:text="Read" />
+
+    <ImageView
+        android:id="@+id/track"
+        android:layout_width="1080px"
+        android:layout_height="860px"
+        android:layout_marginStart="0dp"
+        android:layout_marginTop="0dp"
+        android:scaleType="fitXY"
+        android:src="@drawable/img_1" />
+
+    <ImageView
+        android:id="@+id/car"
+        android:layout_width="120px"
+        android:layout_height="50px"
+        android:layout_marginLeft="340px"
+        android:layout_marginTop="300px"
+        android:rotation="-90"
+        android:src="@drawable/safetycar"
+        android:visibility="invisible" />
+
+    <ImageView
+        android:id="@+id/sensorE"
+        android:layout_width="30px"
+        android:layout_height="30px"
+        android:layout_marginLeft="770px"
+        android:layout_marginTop="740px"
+        android:rotation="-180"
+        android:src="@drawable/car"
+        android:visibility="invisible"/>
+
+    <ImageView
+        android:id="@+id/sensorD"
+        android:layout_width="30px"
+        android:layout_height="30px"
+        android:layout_marginLeft="650px"
+        android:layout_marginTop="740px"
+        android:rotation="-180"
+        android:src="@drawable/car"
+        android:visibility="invisible"/>
+
+    <EditText
+        android:id="@+id/QtdCar"
+        android:layout_width="90dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="230dp"
+        android:layout_marginTop="340dp"
+        android:gravity="center"
+        android:inputType="number"
+        android:textSize="20dp"
+        android:textColor="@color/black"
+        android:hint="Valor"
+        android:background="@drawable/edittext_border"/>
+
+    <TextView
+        android:layout_width="200dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="350dp"
+        android:layout_marginStart="60dp"
+        android:text="Qtd de carros:"
+        android:textSize="25dp"
+        android:textColor="@color/black" />
+
+</RelativeLayout>
