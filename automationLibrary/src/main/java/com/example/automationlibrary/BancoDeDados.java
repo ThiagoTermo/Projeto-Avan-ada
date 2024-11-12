@@ -79,6 +79,7 @@ public class BancoDeDados {
                                 int carCount = task.getResult().size();
                                 Log.d("MainActivity", "Número total de carros: " + carCount);
 
+                                
                                 for (QueryDocumentSnapshot document : task.getResult()) {
                                     name = document.getString("Name");
                                     idImage = document.getDouble("IdImage");
