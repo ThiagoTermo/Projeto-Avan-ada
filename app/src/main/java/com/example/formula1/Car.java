@@ -18,7 +18,6 @@ public class Car implements Runnable{
     private float detectionRadius = 65f;
     private int penalty;
     private ArrayList<Sensor> sensors;
-    private boolean finished;
     private MainActivity mainActivity;
     private boolean running;
     private Semaphore semaphore;

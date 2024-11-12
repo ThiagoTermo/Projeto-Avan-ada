@@ -1,29 +1,26 @@
 package com.example.automationlibrary;
 
 import android.util.Log;
-import android.widget.ImageView;
 
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.Semaphore;
 
 public class BancoDeDados {
 
+    private static ArrayList<CarsAttributes> cars = new ArrayList<>();
+
     public static FirebaseFirestore db = FirebaseFirestore.getInstance();
-    //public static HashMap<String, Object> carBD = new HashMap<>();
-    public static ArrayList<HashMap> allCarsBD = new ArrayList();
     public static int qtdCars;
     public static String name;
     public static double idImage;
     public static double posX;
     public static double posY;
-    public static double speed;
+    public static long speed;
     public static long laps;
     public static double distance;
     public static double rotation;
@@ -65,8 +62,6 @@ public class BancoDeDados {
         readQtdCars(new OnQtdCarsReadListener() {
             @Override
             public void onQtdCarsRead(long qtdcar) {
-                // Aqui você pode usar o valor de qtdcar
-                Log.d("MainActivity", "Quantidade de carros: " + qtdcar);
 
                 qtdCars = (int)qtdcar;
 
@@ -76,30 +71,21 @@ public class BancoDeDados {
                         .get()
                         .addOnCompleteListener(task -> {
                             if (task.isSuccessful()) {
-                                int carCount = task.getResult().size();
-                                Log.d("MainActivity", "Número total de carros: " + carCount);
-
-                                
                                 for (QueryDocumentSnapshot document : task.getResult()) {
+
                                     name = document.getString("Name");
                                     idImage = document.getDouble("IdImage");
                                     posX = document.getDouble("PosX");
                                     posY = document.getDouble("PosY");
-                                    speed = document.getDouble("Speed");
+                                    speed = document.getLong("Speed");
                                     laps = document.getLong("Laps");
                                     distance = document.getDouble("Distance");
                                     rotation = document.getDouble("Rotation");
 
-                                    // Exibindo no log (ou faça outra manipulação conforme necessário)
-                                    Log.d("MainActivity", "Carro: " + name);
-                                    Log.d("MainActivity", "IdImage: " + idImage);
-                                    Log.d("MainActivity", "Posição X: " + posX + ", Posição Y: " + posY);
-                                    Log.d("MainActivity", "Velocidade: " + speed);
-                                    Log.d("MainActivity", "Voltas: " + laps);
-                                    Log.d("MainActivity", "Distância: " + distance);
-                                    Log.d("MainActivity", "Rotação: " + rotation);
+                                    CarsAttributes car = new CarsAttributes(name, (int) idImage, (int) posX, (int) posY,
+                                            speed, (int) laps, (float) distance, (float) rotation);
 
-
+                                    cars.add(car);
 
                                 }
                             } else {
@@ -115,7 +101,11 @@ public class BancoDeDados {
     }
 
     public static ArrayList getArray(){
-        return allCarsBD;
+        return cars;
+    }
+
+    public static void clearArray(){
+        cars.clear();
     }
 
 }

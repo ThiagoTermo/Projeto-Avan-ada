@@ -2,6 +2,7 @@ package com.example.formula1;
 
 import com.example.automationlibrary.Calculations;
 import com.example.automationlibrary.BancoDeDados;
+import com.example.automationlibrary.CarsAttributes;
 
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -22,7 +23,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
-
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import android.widget.RelativeLayout;
@@ -45,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
     private Boolean paused;
     private Boolean finish;
     private Boolean started;
+    private Boolean BD;
     private ArrayList<Thread> threads;
     private FirebaseFirestore db;
     private HashMap<String, Object> carsDB;
@@ -72,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
             started = false;
             paused = false;
             finish = false;
+            BD = false;
             threads = new ArrayList<>();
             db = FirebaseFirestore.getInstance();
             carsDB = new HashMap<>();
@@ -86,7 +88,6 @@ public class MainActivity extends AppCompatActivity {
 
     public void startRace() {
         try {
-            Log.d("MainActivity", "To tentando criar as tred ");
             for (int i = 0; i < cars.size(); i++) {
                 Car car = cars.get(i);
                 Thread carThread = new Thread(car);  // Cria a Thread para o Car específico
@@ -98,7 +99,6 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     carThread.setPriority(5); // Prioridade normal para os outros
                 }
-                Log.d("MainActivity", "To criando as tred ");
                 carThread.start();  // Inicia a Thread com a prioridade definida
             }
 
@@ -113,9 +113,6 @@ public class MainActivity extends AppCompatActivity {
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-
-                    //Log.d("MainActivity","Numero do carro: " + car.getName());
-                    //Log.d("MainActivity","Numero de voltas: " + car.getLaps());
 
                     Sensor sensorE = car.getSensor(0);
                     Sensor sensorD = car.getSensor(1);
@@ -328,10 +325,8 @@ public class MainActivity extends AppCompatActivity {
                 int blue = -16251188;           // -16251188 = Azul em Hexadecimal #FF0806CC
 
                 if (pixelColor == red) {
-                    Log.d("MainActivity", "Detectou vermelho: " + car.getIdImage());
                     return 1;
                 } else if (pixelColor == blue) {
-                    Log.d("MainActivity", "Detectou azul: " + car.getIdImage());
                     return 2;
                 }
             }
@@ -400,21 +395,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void turnRight(ImageView vehicle, Car car) {
-        // Aqui você pode definir a lógica para fazer o carro curvar para a direita
-        // Isso pode incluir mover o carro para a direita e ajustar a posição do sensor
         ObjectAnimator turnCar = ObjectAnimator.ofFloat(vehicle, "rotation", vehicle.getRotation(), vehicle.getRotation() + car.getSpeed() + 7);
         turnCar.setDuration(100);
         turnCar.start();
-
     }
 
     private void turnLeft(ImageView vehicle, Car car) {
-        // Aqui você pode definir a lógica para fazer o carro curvar para a esquerda
-        // Isso pode incluir mover o carro para a esquerda e ajustar a posição do sensor
         ObjectAnimator turnCar = ObjectAnimator.ofFloat(vehicle, "rotation", vehicle.getRotation(), vehicle.getRotation() - car.getSpeed() - 7);
         turnCar.setDuration(100);
         turnCar.start();
-
     }
 
     public boolean pause() {
@@ -440,6 +429,7 @@ public class MainActivity extends AppCompatActivity {
             carsContainer.removeViews(11, qtdCars);
             finish = true;
             started = false;
+            BancoDeDados.clearArray();
 
         } catch (Exception e) {
             Log.e("MainActivity", "Erro ao finalizar a corrida: ", e);
@@ -468,14 +458,31 @@ public class MainActivity extends AppCompatActivity {
 
     public void read(){
         BancoDeDados.read();
-        qtdCars = BancoDeDados.getQtdCars();
 
-        Semaphore semaphore = new Semaphore(1);
+        started = true;
 
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                // O código aqui dentro será executado após 3 segundos
+
+                qtdCars = BancoDeDados.getQtdCars();
+
+                ArrayList<CarsAttributes> carrosBD = BancoDeDados.getArray();
+
+                Semaphore semaphore = new Semaphore(1);
+
+                for(int i=0; i<qtdCars; i++){
+                    CarsAttributes carBD = carrosBD.get(i);
+                    AddCarsBD(carBD.getName(), carBD.getX(), carBD.getY(), carBD.getRotation(), carBD.getSpeed(), carBD.getLaps(), carBD.getIdImage(), semaphore);
+                }
+                BD = true;
+            }
+        }, 3000); // Delay em milissegundos
     }
 
-    public void AddCarsBD(int x, int y, int rotation, int speed, int laps, int idImage, Semaphore semaphore) {
-        Log.d("MainActivity", "OLAAA");
+    public void AddCarsBD(String name, int x, int y, float rotation, long speed, int laps, int idImage, Semaphore semaphore) {
         try {
             if (idImage == 1) {
                     ImageView vehicle = new ImageView(this);
@@ -499,7 +506,7 @@ public class MainActivity extends AppCompatActivity {
                     // Adicionando o ImageView ao layout
                     carsContainer.addView(vehicle);
 
-                    Car car = new SafetyCar("SafetyCar ", idImage, x, y, 1000, speed, laps, 0, 0, this, semaphore);
+                    Car car = new SafetyCar(name, idImage, x, y, 1000, speed, laps, 0, 0, this, semaphore);
                     car.addSensors(new Sensor());
                     car.addSensors(new Sensor());
                     car.addSensors(new Sensor());
@@ -528,7 +535,7 @@ public class MainActivity extends AppCompatActivity {
                 // Adicionando o ImageView ao layout
                 carsContainer.addView(vehicle);
 
-                Car car = new RaceCar("Carro " + (idImage), idImage, x, y, 1000, speed, laps, 0, 0, this, semaphore);
+                Car car = new RaceCar(name, idImage, x, y, 1000, speed, laps, 0, 0, this, semaphore);
                 car.addSensors(new Sensor());
                 car.addSensors(new Sensor());
                 car.addSensors(new Sensor());
@@ -550,14 +557,15 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Toast.makeText(getApplicationContext(), "Start", Toast.LENGTH_SHORT).show();
 
-                if(!paused || finish) {
+                if((!paused || finish) && !BD) {
                     QtdsCars();
                     AddCars();
                     finish = false;
                 }
-                if(!started) {
-                    startRace();
+
+                if(!started || BD) {
                     started = true;
+                    startRace();
                 }
 
                 paused = false;
@@ -591,21 +599,8 @@ public class MainActivity extends AppCompatActivity {
         readButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(getApplicationContext(), "Jogo carregado", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Jogo carregando", Toast.LENGTH_SHORT).show();
                 read();
-                started = true;
-                // Delay de 2 segundos (2000 ms)
-                Handler handler = new Handler();
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        // O código aqui dentro será executado após 2 segundos
-                        Log.d("MainActivity", "Isso é após o delay de 2 segundos");
-                        startRace();
-                    }
-                }, 4000); // Delay em milissegundos
-
-
             }
         });
 
