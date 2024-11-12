@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Formula1"
 include(":app")
-include(":calculationsLibrary")
+include(":automationLibrary")

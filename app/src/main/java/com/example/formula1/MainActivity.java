@@ -1,16 +1,13 @@
 package com.example.formula1;
 
-import com.example.calculationslibrary.Calculations;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
+import com.example.automationlibrary.Calculations;
+import com.example.automationlibrary.BancoDeDados;
+
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicLong;
 
 import android.animation.ObjectAnimator;
 import android.graphics.Bitmap;
@@ -50,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
     private Boolean started;
     private ArrayList<Thread> threads;
     private FirebaseFirestore db;
-    private Map<String, Object> carsDB;
+    private HashMap<String, Object> carsDB;
     private int qtdCars;
 
     @Override
@@ -465,90 +462,20 @@ public class MainActivity extends AppCompatActivity {
             carsDB.put("Laps", car.getLaps());
             carsDB.put("Distance", car.getDistance());
 
-            db.collection("Carros").document(car.getName()).set(carsDB).addOnSuccessListener(aVoid -> {
-                Log.d("MainActivity", "Dados gravados com sucesso");
-            }).addOnFailureListener(e -> {
-                Log.d("MainActivity", "Erro ao gravar os dados");
-
-            });
+            BancoDeDados.record(carsDB, car.getName());
         }
     }
 
-    public interface OnQtdCarsReadListener {
-        void onQtdCarsRead(long qtdcar);  // Método que será chamado quando os dados forem lidos
-    }
-
-    public void readQtdCars(OnQtdCarsReadListener listener) {
-        DocumentReference docRef = db.collection("Carros").document("Carro 1");
-
-        docRef.get().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                DocumentSnapshot document = task.getResult();
-                if (document.exists()) {
-                    // Extraindo os dados do documento específico
-                    long qtdcar = (document.getLong("Quantidade total de carros"));
-                    listener.onQtdCarsRead(qtdcar);
-                } else {
-                    Log.d("MainActivity", "Documento não encontrado!");
-                }
-            } else {
-                Log.w("MainActivity", "Erro ao ler o documento.", task.getException());
-            }
-        });
-    }
-
     public void read(){
-        readQtdCars(new OnQtdCarsReadListener() {
-            @Override
-            public void onQtdCarsRead(long qtdcar) {
-                // Aqui você pode usar o valor de qtdcar
-                Log.d("MainActivity", "Quantidade de carros: " + qtdcar);
+        BancoDeDados.read();
+        qtdCars = BancoDeDados.getQtdCars();
 
-                qtdCars = (int)qtdcar;
+        Semaphore semaphore = new Semaphore(1);
 
-                db.collection("Carros")
-                        .orderBy("IdImage")
-                        .limit(qtdcar)  // Limita a quantidade de carros
-                        .get()
-                        .addOnCompleteListener(task -> {
-                            if (task.isSuccessful()) {
-                                int carCount = task.getResult().size();
-                                Log.d("MainActivity", "Número total de carros: " + carCount);
-
-                                Semaphore semaphore = new Semaphore(1);
-
-                                for (QueryDocumentSnapshot document : task.getResult()) {
-                                    String name = document.getString("Name");
-                                    double idImage = document.getDouble("IdImage");
-                                    double posX = document.getDouble("PosX");
-                                    double posY = document.getDouble("PosY");
-                                    double speed = document.getDouble("Speed");
-                                    long laps = document.getLong("Laps");
-                                    double distance = document.getDouble("Distance");
-                                    double rotation = document.getDouble("Rotation");
-
-                                    // Exibindo no log (ou faça outra manipulação conforme necessário)
-                                    Log.d("MainActivity", "Carro: " + name);
-                                    Log.d("MainActivity", "IdImage: " + idImage);
-                                    Log.d("MainActivity", "Posição X: " + posX + ", Posição Y: " + posY);
-                                    Log.d("MainActivity", "Velocidade: " + speed);
-                                    Log.d("MainActivity", "Voltas: " + laps);
-                                    Log.d("MainActivity", "Distância: " + distance);
-                                    Log.d("MainActivity", "Rotação: " + rotation);
-
-                                    AddCarsBD((int) posX, (int) posY, (int) rotation, (int) speed, (int) laps, (int) idImage, semaphore);
-
-                                }
-                            } else {
-                                Log.w("MainActivity", "Erro ao ler documentos.", task.getException());
-                            }
-                        });
-            }
-        });
     }
 
     public void AddCarsBD(int x, int y, int rotation, int speed, int laps, int idImage, Semaphore semaphore) {
-
+        Log.d("MainActivity", "OLAAA");
         try {
             if (idImage == 1) {
                     ImageView vehicle = new ImageView(this);
@@ -667,8 +594,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), "Jogo carregado", Toast.LENGTH_SHORT).show();
                 read();
                 started = true;
-                Log.d("MainActivity", "To caqqqq ");
-                // Exemplo de um delay de 2 segundos (2000 ms)
+                // Delay de 2 segundos (2000 ms)
                 Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {
                     @Override

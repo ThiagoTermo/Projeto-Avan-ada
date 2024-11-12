@@ -1,4 +1,4 @@
-package com.example.calculationslibrary;
+package com.example.automationlibrary;
 
 import android.graphics.Point;
 import android.util.Log;

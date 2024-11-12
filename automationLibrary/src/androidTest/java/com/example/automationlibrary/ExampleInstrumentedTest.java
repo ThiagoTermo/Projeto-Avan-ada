@@ -1,4 +1,4 @@
-package com.example.calculationslibrary;
+package com.example.automationlibrary;
 
 import android.content.Context;
 
