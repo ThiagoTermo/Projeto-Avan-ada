@@ -1,16 +1,16 @@
 package com.example.formula1;
 
 import com.example.calculationslibrary.Calculations;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.Firebase;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicLong;
 
 import android.animation.ObjectAnimator;
 import android.graphics.Bitmap;
@@ -26,7 +26,6 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import android.widget.RelativeLayout;
@@ -52,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<Thread> threads;
     private FirebaseFirestore db;
     private Map<String, Object> carsDB;
+    private int qtdCars;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
             recordButton = findViewById(R.id.bRecord);
             readButton = findViewById(R.id.bRead);
             carsContainer = findViewById(R.id.carsContainer);
-            trackBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.img_1).copy(Bitmap.Config.ARGB_8888,true);
+            trackBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.img_1).copy(Bitmap.Config.ARGB_8888, true);
             handler = new Handler();
             trackImage = findViewById(R.id.track);
             cars = new ArrayList<>();
@@ -87,8 +87,9 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void startRace(){
+    public void startRace() {
         try {
+            Log.d("MainActivity", "To tentando criar as tred ");
             for (int i = 0; i < cars.size(); i++) {
                 Car car = cars.get(i);
                 Thread carThread = new Thread(car);  // Cria a Thread para o Car específico
@@ -100,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     carThread.setPriority(5); // Prioridade normal para os outros
                 }
-
+                Log.d("MainActivity", "To criando as tred ");
                 carThread.start();  // Inicia a Thread com a prioridade definida
             }
 
@@ -165,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public int QtdsCars(){
+    public void QtdsCars() {
         try {
             String qtdeCarString = qtdeCar.getText().toString();
             int qtdCar;
@@ -176,10 +177,9 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), "Por favor, insira um valor", Toast.LENGTH_SHORT).show();
                 qtdCar = 0;
             }
-            return qtdCar;
+            qtdCars = qtdCar+1;
         } catch (Exception e) {
             Log.e("MainActivity", "Erro ao obter a quantidade de carros: ", e);
-            return 0;
         }
     }
 
@@ -187,8 +187,7 @@ public class MainActivity extends AppCompatActivity {
         Semaphore semaphore = new Semaphore(1);
 
         try {
-            for (int i = 0; i <= QtdsCars(); i++) {
-
+            for (int i = 0; i < qtdCars; i++) {
                 if (i == 0) {
                     ImageView vehicle = new ImageView(this);
 
@@ -314,7 +313,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public int verifySemaphore(Car car){
+    public int verifySemaphore(Car car) {
         try {
             for (int i = 0; i < car.getSizeSensors(); i++) {
                 Sensor sensor = car.getSensor(i);
@@ -346,7 +345,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void updateSensorPositions(Car car, Sensor sensorE, Sensor sensorD, Sensor sensorC,float angle) {
+    public void updateSensorPositions(Car car, Sensor sensorE, Sensor sensorD, Sensor sensorC, float angle) {
         try {
             // Calcula o centro do carro
             float carCenterX = car.getX() + (60);
@@ -406,7 +405,7 @@ public class MainActivity extends AppCompatActivity {
     private void turnRight(ImageView vehicle, Car car) {
         // Aqui você pode definir a lógica para fazer o carro curvar para a direita
         // Isso pode incluir mover o carro para a direita e ajustar a posição do sensor
-        ObjectAnimator turnCar = ObjectAnimator.ofFloat(vehicle, "rotation", vehicle.getRotation(), vehicle.getRotation() + car.getSpeed()+7);
+        ObjectAnimator turnCar = ObjectAnimator.ofFloat(vehicle, "rotation", vehicle.getRotation(), vehicle.getRotation() + car.getSpeed() + 7);
         turnCar.setDuration(100);
         turnCar.start();
 
@@ -415,17 +414,17 @@ public class MainActivity extends AppCompatActivity {
     private void turnLeft(ImageView vehicle, Car car) {
         // Aqui você pode definir a lógica para fazer o carro curvar para a esquerda
         // Isso pode incluir mover o carro para a esquerda e ajustar a posição do sensor
-        ObjectAnimator turnCar = ObjectAnimator.ofFloat(vehicle, "rotation", vehicle.getRotation(), vehicle.getRotation() - car.getSpeed()-7);
+        ObjectAnimator turnCar = ObjectAnimator.ofFloat(vehicle, "rotation", vehicle.getRotation(), vehicle.getRotation() - car.getSpeed() - 7);
         turnCar.setDuration(100);
         turnCar.start();
 
     }
 
-    public boolean pause(){
+    public boolean pause() {
         return paused;
     }
 
-    public void finish(){
+    public void finish() {
         try {
             for (Car car : cars) {
                 car.setFinish(false);
@@ -441,12 +440,176 @@ public class MainActivity extends AppCompatActivity {
 
             handler.removeCallbacksAndMessages(null);
             cars.clear();
-            carsContainer.removeViews(11, QtdsCars() + 1);
+            carsContainer.removeViews(11, qtdCars);
             finish = true;
             started = false;
 
         } catch (Exception e) {
             Log.e("MainActivity", "Erro ao finalizar a corrida: ", e);
+        }
+    }
+
+    public void record() {
+
+        carsDB.put("Quantidade total de carros", qtdCars);
+
+        for (Car car : cars) {
+
+            ImageView vehicle = findViewById(car.getIdImage());
+            carsDB.put("Rotation", vehicle.getRotation());
+            carsDB.put("Name", car.getName());
+            carsDB.put("IdImage", car.getIdImage());
+            carsDB.put("PosX", car.getX());
+            carsDB.put("PosY", car.getY());
+            carsDB.put("Speed", car.getSpeed());
+            carsDB.put("Laps", car.getLaps());
+            carsDB.put("Distance", car.getDistance());
+
+            db.collection("Carros").document(car.getName()).set(carsDB).addOnSuccessListener(aVoid -> {
+                Log.d("MainActivity", "Dados gravados com sucesso");
+            }).addOnFailureListener(e -> {
+                Log.d("MainActivity", "Erro ao gravar os dados");
+
+            });
+        }
+    }
+
+    public interface OnQtdCarsReadListener {
+        void onQtdCarsRead(long qtdcar);  // Método que será chamado quando os dados forem lidos
+    }
+
+    public void readQtdCars(OnQtdCarsReadListener listener) {
+        DocumentReference docRef = db.collection("Carros").document("Carro 1");
+
+        docRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+                if (document.exists()) {
+                    // Extraindo os dados do documento específico
+                    long qtdcar = (document.getLong("Quantidade total de carros"));
+                    listener.onQtdCarsRead(qtdcar);
+                } else {
+                    Log.d("MainActivity", "Documento não encontrado!");
+                }
+            } else {
+                Log.w("MainActivity", "Erro ao ler o documento.", task.getException());
+            }
+        });
+    }
+
+    public void read(){
+        readQtdCars(new OnQtdCarsReadListener() {
+            @Override
+            public void onQtdCarsRead(long qtdcar) {
+                // Aqui você pode usar o valor de qtdcar
+                Log.d("MainActivity", "Quantidade de carros: " + qtdcar);
+
+                qtdCars = (int)qtdcar;
+
+                db.collection("Carros")
+                        .orderBy("IdImage")
+                        .limit(qtdcar)  // Limita a quantidade de carros
+                        .get()
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                int carCount = task.getResult().size();
+                                Log.d("MainActivity", "Número total de carros: " + carCount);
+
+                                Semaphore semaphore = new Semaphore(1);
+
+                                for (QueryDocumentSnapshot document : task.getResult()) {
+                                    String name = document.getString("Name");
+                                    double idImage = document.getDouble("IdImage");
+                                    double posX = document.getDouble("PosX");
+                                    double posY = document.getDouble("PosY");
+                                    double speed = document.getDouble("Speed");
+                                    long laps = document.getLong("Laps");
+                                    double distance = document.getDouble("Distance");
+                                    double rotation = document.getDouble("Rotation");
+
+                                    // Exibindo no log (ou faça outra manipulação conforme necessário)
+                                    Log.d("MainActivity", "Carro: " + name);
+                                    Log.d("MainActivity", "IdImage: " + idImage);
+                                    Log.d("MainActivity", "Posição X: " + posX + ", Posição Y: " + posY);
+                                    Log.d("MainActivity", "Velocidade: " + speed);
+                                    Log.d("MainActivity", "Voltas: " + laps);
+                                    Log.d("MainActivity", "Distância: " + distance);
+                                    Log.d("MainActivity", "Rotação: " + rotation);
+
+                                    AddCarsBD((int) posX, (int) posY, (int) rotation, (int) speed, (int) laps, (int) idImage, semaphore);
+
+                                }
+                            } else {
+                                Log.w("MainActivity", "Erro ao ler documentos.", task.getException());
+                            }
+                        });
+            }
+        });
+    }
+
+    public void AddCarsBD(int x, int y, int rotation, int speed, int laps, int idImage, Semaphore semaphore) {
+
+        try {
+            if (idImage == 1) {
+                    ImageView vehicle = new ImageView(this);
+
+                    // Definindo a imagem do carro
+                    vehicle.setImageResource(R.drawable.safetycar);
+
+                    vehicle.setId(idImage);
+
+                    // Definindo os parâmetros de layout
+                    RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(120, 50);
+
+                    // Definindo margens (ajuste as margens conforme necessário)
+                    layoutParams.setMargins(x, y, 0, 0);
+
+                    // Aplicando os parâmetros ao ImageView
+                    vehicle.setLayoutParams(layoutParams);
+
+                    vehicle.setRotation(rotation);
+
+                    // Adicionando o ImageView ao layout
+                    carsContainer.addView(vehicle);
+
+                    Car car = new SafetyCar("SafetyCar ", idImage, x, y, 1000, speed, laps, 0, 0, this, semaphore);
+                    car.addSensors(new Sensor());
+                    car.addSensors(new Sensor());
+                    car.addSensors(new Sensor());
+                    cars.add(car);
+
+                } else {
+
+                ImageView vehicle = new ImageView(this);
+
+                // Definindo a imagem do carro
+                vehicle.setImageResource(R.drawable.car1);
+
+                vehicle.setId(idImage);
+
+                // Definindo os parâmetros de layout
+                RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(120, 50);
+
+                // Definindo margens (ajuste as margens conforme necessário)
+                layoutParams.setMargins(x, y, 0, 0);
+
+                // Aplicando os parâmetros ao ImageView
+                vehicle.setLayoutParams(layoutParams);
+
+                vehicle.setRotation(rotation);
+
+                // Adicionando o ImageView ao layout
+                carsContainer.addView(vehicle);
+
+                Car car = new RaceCar("Carro " + (idImage), idImage, x, y, 1000, speed, laps, 0, 0, this, semaphore);
+                car.addSensors(new Sensor());
+                car.addSensors(new Sensor());
+                car.addSensors(new Sensor());
+                cars.add(car);
+
+            }
+        } catch (Exception e) {
+            Log.e("MainActivity", "Erro ao adicionar carros: ", e);
         }
     }
 
@@ -461,6 +624,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), "Start", Toast.LENGTH_SHORT).show();
 
                 if(!paused || finish) {
+                    QtdsCars();
                     AddCars();
                     finish = false;
                 }
@@ -493,27 +657,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Toast.makeText(getApplicationContext(), "Jogo gravado", Toast.LENGTH_SHORT).show();
-                for(Car car : cars){
-                    carsDB.put("Name", car.getName());
-                    carsDB.put("IdImage", car.getIdImage());
-                    carsDB.put("PosX", car.getX());
-                    carsDB.put("PosY", car.getY());
-                    carsDB.put("Speed", car.getSpeed());
-                    carsDB.put("Laps", car.getLaps());
-                    carsDB.put("Distance", car.getDistance());
-
-                    db.collection("Carros").add(carsDB).addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                        @Override
-                        public void onSuccess(DocumentReference documentReference) {
-                            Log.d("MainActivity", "Dados gravados com sucesso");
-                        }
-                    }).addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Log.d("MainActivity", "Erro ao gravar os dados");
-                        }
-                    });
-                }
+                record();
             }
         });
 
@@ -521,6 +665,21 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Toast.makeText(getApplicationContext(), "Jogo carregado", Toast.LENGTH_SHORT).show();
+                read();
+                started = true;
+                Log.d("MainActivity", "To caqqqq ");
+                // Exemplo de um delay de 2 segundos (2000 ms)
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        // O código aqui dentro será executado após 2 segundos
+                        Log.d("MainActivity", "Isso é após o delay de 2 segundos");
+                        startRace();
+                    }
+                }, 4000); // Delay em milissegundos
+
+
             }
         });
 
