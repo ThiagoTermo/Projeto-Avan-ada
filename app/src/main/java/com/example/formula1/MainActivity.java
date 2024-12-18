@@ -4,10 +4,10 @@ import com.example.automationlibrary.Calculations;
 import com.example.automationlibrary.BancoDeDados;
 import com.example.automationlibrary.CarsAttributes;
 
-import com.google.firebase.firestore.FirebaseFirestore;
-
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 
 import android.animation.ObjectAnimator;
@@ -47,9 +47,9 @@ public class MainActivity extends AppCompatActivity {
     private Boolean started;
     private Boolean BD;
     private ArrayList<Thread> threads;
-    private FirebaseFirestore db;
     private HashMap<String, Object> carsDB;
     private int qtdCars;
+    ExecutorService executor;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -75,10 +75,12 @@ public class MainActivity extends AppCompatActivity {
             finish = false;
             BD = false;
             threads = new ArrayList<>();
-            db = FirebaseFirestore.getInstance();
             carsDB = new HashMap<>();
 
             ControlButton();
+
+            int numThreads = Runtime.getRuntime().availableProcessors(); // qtd processadores disponíveis
+            executor = Executors.newFixedThreadPool(1); // qtd a ser usados
 
         } catch (Exception e) {
             Log.e("MainActivity", "Erro na inicialização: ", e);
@@ -88,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void startRace() {
         try {
+
             for (int i = 0; i < cars.size(); i++) {
                 Car car = cars.get(i);
                 Thread carThread = new Thread(car);  // Cria a Thread para o Car específico
@@ -110,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void racing(Car car) {
         try {
-            handler.postDelayed(new Runnable() {
+           handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
 
@@ -121,38 +124,55 @@ public class MainActivity extends AppCompatActivity {
                     int id = car.getIdImage();
                     ImageView vehicle = findViewById(id);
 
-                    isCarOnTrack(sensorC.getX(), sensorC.getY(), car, sensorC);
-
                     boolean isColliding = checkCollision(car, sensorC);
 
                     if (isColliding) {
-                        car.setSpeed(0);
-                        car.setPenalty(car.getPenalty() + 1);
+
+                        if(checkCollision(car, sensorD) && !checkCollision(car, sensorE)){
+                            car.setSpeed(5);
+                            turnLeft(vehicle, car);
+                        } else if (!checkCollision(car, sensorD) && checkCollision(car, sensorE)) {
+                            car.setSpeed(5);
+                            turnRight(vehicle, car);
+                        } else
+                            car.setSpeed(0);
+
                     } else {
+
+                        //executor.submit(() -> {
+                        //long startTime = System.nanoTime(); // Início da tarefa
+                            // Código da tarefa a ser executada
 
                         boolean onTrackE = isCarOnTrack(sensorE.getX(), sensorE.getY(), car, sensorE);
                         boolean onTrackD = isCarOnTrack(sensorD.getX(), sensorD.getY(), car, sensorD);
 
+                        //long endTime = System.nanoTime();   // Final da tarefa
+                        //long executionTime = (endTime - startTime) / 1_000; // Tempo em milissegundos
+                        //Log.d("ExecutionTime", "Tempo de processamento: " + executionTime + " us");
+                        //});
+
                         if (onTrackD && onTrackE) {
-                            car.setSpeed(15);
+                            car.setSpeed(car.getLineSpeed());
                         } else if (!onTrackE && onTrackD) {
-                            car.setSpeed(7);
+                            car.setSpeed(5);
                             turnRight(vehicle, car);
                             car.setPenalty(car.getPenalty() + 1);
                         } else if (!onTrackD && onTrackE) {
-                            car.setSpeed(7);
+                            car.setSpeed(5);
                             turnLeft(vehicle, car);
                             car.setPenalty(car.getPenalty() + 1);
                         } else {
                             car.setSpeed(-30);
                         }
+
                     }
+
                     moveCarForward(vehicle, car, sensorE, sensorD);
+
                     updateSensorPositions(car, sensorE, sensorD, sensorC, vehicle.getRotation());
 
-
                     // Re-agendar o movimento após um pequeno delay
-                    handler.postDelayed(this, 1000000000);  // Ajuste o delay conforme necessário
+                    //handler.postDelayed(this, 1000000000);  // Ajuste o delay conforme necessário
                 }
             }, 100);
         } catch (Exception e) {
@@ -181,7 +201,14 @@ public class MainActivity extends AppCompatActivity {
         Semaphore semaphore = new Semaphore(1);
 
         try {
+
+            int x=0;
+            int y=1;
+
             for (int i = 0; i < qtdCars; i++) {
+
+                //int randomSpeed = (int)(Math.random() * ((18 - 10) + 1)) + 10;
+
                 if (i == 0) {
                     ImageView vehicle = new ImageView(this);
 
@@ -191,10 +218,10 @@ public class MainActivity extends AppCompatActivity {
                     vehicle.setId(i + 1);
 
                     // Definindo os parâmetros de layout
-                    RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(120, 50);
+                    RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(60, 30);
 
                     // Definindo margens (ajuste as margens conforme necessário)
-                    layoutParams.setMargins(650, 710, 0, 0);
+                    layoutParams.setMargins(800, 720, 0, 0);
 
                     // Aplicando os parâmetros ao ImageView
                     vehicle.setLayoutParams(layoutParams);
@@ -204,7 +231,7 @@ public class MainActivity extends AppCompatActivity {
                     // Adicionando o ImageView ao layout
                     carsContainer.addView(vehicle);
 
-                    Car car = new SafetyCar("SafetyCar ", i + 1, 650, 710, 1000, 10, 0, 0, 0, this, semaphore);
+                    Car car = new SafetyCar("SafetyCar ", i + 1, 800, 720, 1000, 10, 15, 0, 0, 0, this, semaphore);
                     car.addSensors(new Sensor());
                     car.addSensors(new Sensor());
                     car.addSensors(new Sensor());
@@ -220,10 +247,18 @@ public class MainActivity extends AppCompatActivity {
                     vehicle.setId(i + 1);
 
                     // Definindo os parâmetros de layout
-                    RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(120, 50);
+                    RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(60, 30);
+
+                    if(y==0){
+                        y = 45;
+
+                    } else {
+                        y = 0;
+                        x++;
+                    }
 
                     // Definindo margens (ajuste as margens conforme necessário)
-                    layoutParams.setMargins(650 - (i * 120), 710, 0, 0);
+                    layoutParams.setMargins(780 - (x * 60), 700 + y, 0, 0);
 
                     // Aplicando os parâmetros ao ImageView
                     vehicle.setLayoutParams(layoutParams);
@@ -233,7 +268,7 @@ public class MainActivity extends AppCompatActivity {
                     // Adicionando o ImageView ao layout
                     carsContainer.addView(vehicle);
 
-                    Car car = new RaceCar("Carro " + (i), i + 1, 650 - (i * 120), 710, 1000, 10, 0, 0, 0, this, semaphore);
+                    Car car = new RaceCar("Carro " + (i), i + 1, 780 - (x * 60), 700 + y, 1000, 10, 15,0, 0, 0, this, semaphore);
                     car.addSensors(new Sensor());
                     car.addSensors(new Sensor());
                     car.addSensors(new Sensor());
@@ -294,8 +329,18 @@ public class MainActivity extends AppCompatActivity {
             int green = -14967284;          // -14967284 = Verde em Hexdecimal #FF192D
 
             if (pixelColor != Color.BLACK) {
-                if (pixelColor == green && car.getSensor(2) == sensor) {
-                    car.setLaps(car.getLaps() + 1);
+                //if (pixelColor == green && car.getSensor(2) == sensor) {
+                //if(adjustedPoint.x >= 1905 && adjustedPoint.x <= 1920 && adjustedPoint.y >= 1700 && adjustedPoint.y <= 1850){
+                if(car.getX() >= 780 && car.getX() <= 820 && car.getY() >= 680 && car.getY() <= 800){
+                    if(!car.getisPassed()) {
+                        car.setLaps(car.getLaps() + 1);
+                        Log.d("MainActivity", "Voltas: " + car.getLaps() + " Com o carro: " + car.getName());
+                        Log.d("Car" + car.getName(), "Cood X: " + car.getX());
+                        Log.d("Car" + car.getName(), "Cood Y: " + car.getY());
+                        car.setisPassed(true);
+                    } else {
+                        //isPassed = false;
+                    }
                 }
                 return true;
             } else {
@@ -309,28 +354,16 @@ public class MainActivity extends AppCompatActivity {
 
     public int verifySemaphore(Car car) {
         try {
-            for (int i = 0; i < car.getSizeSensors(); i++) {
-                Sensor sensor = car.getSensor(i);
-                Point adjustedPoint = adjustCoordinates(sensor.getX(), sensor.getY());
 
-                if (adjustedPoint.x < 0 || adjustedPoint.x >= trackBitmap.getWidth() ||
-                        adjustedPoint.y < 0 || adjustedPoint.y >= trackBitmap.getHeight()) {
-                    finish();
-                    return 0;
-                }
-
-                int pixelColor = trackBitmap.getPixel(adjustedPoint.x, adjustedPoint.y);
-
-                int red = -59091;               // -14967284 = Verde em Hexadecimal #FF1B9E0C
-                int blue = -16251188;           // -16251188 = Azul em Hexadecimal #FF0806CC
-
-                if (pixelColor == red) {
-                    return 1;
-                } else if (pixelColor == blue) {
-                    return 2;
-                }
+            if (car.getX() >= 300 && car.getX() <= 470 && car.getY() >= 275 && car.getY() <= 290) {
+                car.setisPassed(false);
+                return 1;
+            } else if (car.getX() >= 70 && car.getX() <= 240 && car.getY() >= 275 && car.getY() <= 290) {
+                return 2;
             }
-            return 0;
+
+        return 0;
+
         } catch (Exception e) {
             Log.e("MainActivity", "Erro ao verificar se o carro esta na zona de semaforo ", e);
             return 0;
@@ -340,11 +373,11 @@ public class MainActivity extends AppCompatActivity {
     public void updateSensorPositions(Car car, Sensor sensorE, Sensor sensorD, Sensor sensorC, float angle) {
         try {
             // Calcula o centro do carro
-            float carCenterX = car.getX() + (60);
-            float carCenterY = car.getY() + (25);
+            float carCenterX = car.getX() + (30);
+            float carCenterY = car.getY() + (15);
 
-            float sensorOffsetX = 65;
-            float sensorOffsetY = -30;
+            float sensorOffsetX = 35;
+            float sensorOffsetY = -20;
 
             // Calcula a posição do sensor central
             sensorC.setX(Calculations.updateXsensorC(carCenterX, sensorOffsetX, angle));
@@ -395,13 +428,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void turnRight(ImageView vehicle, Car car) {
-        ObjectAnimator turnCar = ObjectAnimator.ofFloat(vehicle, "rotation", vehicle.getRotation(), vehicle.getRotation() + car.getSpeed() + 7);
+        ObjectAnimator turnCar = ObjectAnimator.ofFloat(vehicle, "rotation", vehicle.getRotation(), vehicle.getRotation() + car.getSpeed() + 12);
         turnCar.setDuration(100);
         turnCar.start();
     }
 
     private void turnLeft(ImageView vehicle, Car car) {
-        ObjectAnimator turnCar = ObjectAnimator.ofFloat(vehicle, "rotation", vehicle.getRotation(), vehicle.getRotation() - car.getSpeed() - 7);
+        ObjectAnimator turnCar = ObjectAnimator.ofFloat(vehicle, "rotation", vehicle.getRotation(), vehicle.getRotation() - car.getSpeed() - 12);
         turnCar.setDuration(100);
         turnCar.start();
     }
@@ -429,6 +462,8 @@ public class MainActivity extends AppCompatActivity {
             carsContainer.removeViews(11, qtdCars);
             finish = true;
             started = false;
+            BD = false;
+
             BancoDeDados.clearArray();
 
         } catch (Exception e) {
@@ -449,6 +484,7 @@ public class MainActivity extends AppCompatActivity {
             carsDB.put("PosX", car.getX());
             carsDB.put("PosY", car.getY());
             carsDB.put("Speed", car.getSpeed());
+            carsDB.put("lineSpeed", car.getLineSpeed());
             carsDB.put("Laps", car.getLaps());
             carsDB.put("Distance", car.getDistance());
 
@@ -475,14 +511,14 @@ public class MainActivity extends AppCompatActivity {
 
                 for(int i=0; i<qtdCars; i++){
                     CarsAttributes carBD = carrosBD.get(i);
-                    AddCarsBD(carBD.getName(), carBD.getX(), carBD.getY(), carBD.getRotation(), carBD.getSpeed(), carBD.getLaps(), carBD.getIdImage(), semaphore);
+                    AddCarsBD(carBD.getName(), carBD.getX(), carBD.getY(), carBD.getRotation(), carBD.getSpeed(), carBD.getLineSpeed(), carBD.getLaps(), carBD.getIdImage(), semaphore);
                 }
                 BD = true;
             }
         }, 3000); // Delay em milissegundos
     }
 
-    public void AddCarsBD(String name, int x, int y, float rotation, long speed, int laps, int idImage, Semaphore semaphore) {
+    public void AddCarsBD(String name, int x, int y, float rotation, long speed, long lineSpeed, int laps, int idImage, Semaphore semaphore) {
         try {
             if (idImage == 1) {
                     ImageView vehicle = new ImageView(this);
@@ -493,7 +529,7 @@ public class MainActivity extends AppCompatActivity {
                     vehicle.setId(idImage);
 
                     // Definindo os parâmetros de layout
-                    RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(120, 50);
+                    RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(60, 30);
 
                     // Definindo margens (ajuste as margens conforme necessário)
                     layoutParams.setMargins(x, y, 0, 0);
@@ -506,7 +542,7 @@ public class MainActivity extends AppCompatActivity {
                     // Adicionando o ImageView ao layout
                     carsContainer.addView(vehicle);
 
-                    Car car = new SafetyCar(name, idImage, x, y, 1000, speed, laps, 0, 0, this, semaphore);
+                    Car car = new SafetyCar(name, idImage, x, y, 1000, speed, lineSpeed, laps, 0, 0, this, semaphore);
                     car.addSensors(new Sensor());
                     car.addSensors(new Sensor());
                     car.addSensors(new Sensor());
@@ -522,7 +558,7 @@ public class MainActivity extends AppCompatActivity {
                 vehicle.setId(idImage);
 
                 // Definindo os parâmetros de layout
-                RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(120, 50);
+                RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(60, 30);
 
                 // Definindo margens (ajuste as margens conforme necessário)
                 layoutParams.setMargins(x, y, 0, 0);
@@ -535,7 +571,7 @@ public class MainActivity extends AppCompatActivity {
                 // Adicionando o ImageView ao layout
                 carsContainer.addView(vehicle);
 
-                Car car = new RaceCar(name, idImage, x, y, 1000, speed, laps, 0, 0, this, semaphore);
+                Car car = new RaceCar(name, idImage, x, y, 1000, speed, lineSpeed, laps, 0, 0, this, semaphore);
                 car.addSensors(new Sensor());
                 car.addSensors(new Sensor());
                 car.addSensors(new Sensor());
@@ -605,4 +641,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
     }
+
 }
+

@@ -15,15 +15,17 @@ public class Car implements Runnable{
     private long speed;
     private int laps;
     private float distance;
-    private float detectionRadius = 65f;
+    private float detectionRadius = 30f;
     private int penalty;
     private ArrayList<Sensor> sensors;
     private MainActivity mainActivity;
     private boolean running;
     private Semaphore semaphore;
     private boolean controlSemaphore;
+    private long lineSpeed;
+    private Boolean isPassed;
 
-    public Car(String name, int idImage, float x, float y, int fuelTank, long speed, int laps, float distance, int penalty, MainActivity mainActivity, Semaphore semaphore) {
+    public Car(String name, int idImage, float x, float y, int fuelTank, long speed, long lineSpeed, int laps, float distance, int penalty, MainActivity mainActivity, Semaphore semaphore) {
 
         this.name = name;
         this.idImage = idImage;
@@ -33,10 +35,12 @@ public class Car implements Runnable{
         this.distance = distance;
         this.laps = laps;
         this.speed = speed;
+        this.lineSpeed = lineSpeed;
         this.fuelTank = fuelTank;
         this.sensors = new ArrayList<>();
         this.mainActivity = mainActivity;
         this.semaphore = semaphore;
+        isPassed = false;
         running = true;
         controlSemaphore = false;
     }
@@ -105,14 +109,26 @@ public class Car implements Runnable{
         this.x = x;
     }
 
+    public long getLineSpeed(){
+        return lineSpeed;
+    }
+
+    public void setisPassed(boolean isPassed){
+        this.isPassed = isPassed;
+    }
+
+    public boolean getisPassed(){
+        return isPassed;
+    }
+
     public void addSensors(Sensor sensor){
         sensors.add(sensor);
     }
 
     public boolean isCollidingWith(Car otherCar, Sensor sensor) {
         try {
-            float dx = sensor.getX() - (otherCar.getX() + 60);
-            float dy = sensor.getY() - (otherCar.getY() + 25);
+            float dx = sensor.getX() - (otherCar.getX() + 30);
+            float dy = sensor.getY() - (otherCar.getY() + 15);
             float distance = (float) Math.sqrt(dx * dx + dy * dy);
             return distance <= detectionRadius;
 
@@ -144,7 +160,6 @@ public class Car implements Runnable{
         while (running) {
             if(!mainActivity.pause()) {
                 try {
-                    freeRegion();
                     if (mainActivity.verifySemaphore(Car.this) == 1) {
                         semaphore.acquire(); // Adquira o semáforo antes de entrar na região de corrida
                         semaphoreRegion();
@@ -156,6 +171,7 @@ public class Car implements Runnable{
                         controlSemaphore = false;
                         Log.d("Car","Liberei o carro: " + getIdImage());
                     }
+                    freeRegion();
                     Thread.sleep(70);
                 } catch (Exception e) {
                     Log.e("MainActivity", "Erro na regiao de semaforo: ", e);

@@ -22,7 +22,7 @@ public class verifySemaphoreTest {
 
     @Test
     public void verifySemaphoreRed() {
-        Car car = new Car(null, 0, 340, 300, 0, 0, 0, 0, 0, null, null);
+        Car car = new Car(null, 0, 340, 300, 0, 0, 0, 0, 0, 0, null, null);
         car.addSensors(new Sensor());
 
         mainActivity.updateSensorPositions(car, null, null, car.getSensor(0), -90);
@@ -34,7 +34,7 @@ public class verifySemaphoreTest {
 
     @Test
     public void verifySemaphoreBlue() {
-        Car car = new Car(null, 0, 100, 295, 0, 0, 0, 0, 0, null, null);
+        Car car = new Car(null, 0, 100, 295, 0, 0, 0, 0, 0, 0, null, null);
         car.addSensors(new Sensor());
 
         mainActivity.updateSensorPositions(car, null, null, car.getSensor(0), -90);

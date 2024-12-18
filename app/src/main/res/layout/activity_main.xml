@@ -64,20 +64,20 @@
 
     <ImageView
         android:id="@+id/car"
-        android:layout_width="120px"
-        android:layout_height="50px"
-        android:layout_marginLeft="340px"
-        android:layout_marginTop="300px"
+        android:layout_width="60px"
+        android:layout_height="30px"
+        android:layout_marginLeft="230px"
+        android:layout_marginTop="260px"
         android:rotation="-90"
         android:src="@drawable/safetycar"
         android:visibility="invisible" />
 
     <ImageView
         android:id="@+id/sensorE"
-        android:layout_width="30px"
-        android:layout_height="30px"
-        android:layout_marginLeft="770px"
-        android:layout_marginTop="740px"
+        android:layout_width="80px"
+        android:layout_height="40px"
+        android:layout_marginLeft="650px"
+        android:layout_marginTop="735px"
         android:rotation="-180"
         android:src="@drawable/car"
         android:visibility="invisible"/>

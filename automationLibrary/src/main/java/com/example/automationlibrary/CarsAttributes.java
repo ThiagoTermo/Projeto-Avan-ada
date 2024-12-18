@@ -7,11 +7,12 @@ public class CarsAttributes {
     private int x;
     private int y;
     private long speed;
+    private long lineSpeed;
     private int laps;
     private float distance;
     private float rotation;
 
-    public CarsAttributes(String name, int idImage, int x, int y, long speed, int laps, float distance, float rotation) {
+    public CarsAttributes(String name, int idImage, int x, int y, long speed, long lineSpeed, int laps, float distance, float rotation) {
 
         this.name = name;
         this.idImage = idImage;
@@ -21,6 +22,7 @@ public class CarsAttributes {
         this.laps = laps;
         this.speed = speed;
         this.rotation = rotation;
+        this.lineSpeed = lineSpeed;
     }
 
     public String getName() {
@@ -45,6 +47,10 @@ public class CarsAttributes {
 
     public long getSpeed() {
         return speed;
+    }
+
+    public long getLineSpeed(){
+        return lineSpeed;
     }
 
     public float getDistance() {

@@ -21,6 +21,7 @@ public class BancoDeDados {
     public static double posX;
     public static double posY;
     public static long speed;
+    public static long lineSpeed;
     public static long laps;
     public static double distance;
     public static double rotation;
@@ -83,7 +84,7 @@ public class BancoDeDados {
                                     rotation = document.getDouble("Rotation");
 
                                     CarsAttributes car = new CarsAttributes(name, (int) idImage, (int) posX, (int) posY,
-                                            speed, (int) laps, (float) distance, (float) rotation);
+                                            speed, lineSpeed, (int) laps, (float) distance, (float) rotation);
 
                                     cars.add(car);
 
